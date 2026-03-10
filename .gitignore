@@ -96,3 +96,4 @@ coverage/
 # ========================
 .dockerignore
 docker-compose.override.yml
+ca.pem
