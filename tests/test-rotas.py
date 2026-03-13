@@ -123,22 +123,22 @@ def test_criar_imovel(mock_conectar_banco, client):
     mock_conn.close.assert_called_once()
 
     assert response.status_code == 201
-    assert response.get_json() == {"message": "Imóvel adicionado com sucesso!"}
+    assert response.get_json() == {"mensagem": "Imóvel adicionado com sucesso!"}
 
 
-@patch("api.conectar_banco")
+@patch("servidor.conectar_banco")
 def test_criar_imovel_erro_validacao(mock_conectar_banco, client):
     """POST /imoveis/add - falta campo obrigatório -> 400. Não deve acessar o banco."""
     response = client.post("/imoveis/add", json={"logradouro": "saulo"})
 
     assert response.status_code == 400
-    assert response.get_json() == {"erro": "Campos obrigatórios: logradouro, tipo_logradouro, bairro, cidade, cep, tipo, valor, data_aquisicao"}
+    assert response.get_json() == {"error": "Dados incompletos"}
 
     mock_conectar_banco.assert_not_called()
 
-@patch("api.conectar_banco")
+@patch("servidor.conectar_banco")
 def test_atualizar_imovel_ok(mock_conectar_banco, client):
-    """PUT /imoveis/<id> - atualiza com sucesso."""
+    """PUT /imoveis/<id> - atualiza com sucesso!."""
     mock_conn = MagicMock()
     mock_cursor = MagicMock()
     mock_conn.cursor.return_value = mock_cursor
@@ -159,7 +159,7 @@ def test_atualizar_imovel_ok(mock_conectar_banco, client):
     response = client.put("/imoveis/1", json=payload)
 
     assert response.status_code == 200
-    assert response.get_json() == {"mensagem": "Imóvel atualizado com sucesso"}
+    assert response.get_json() == {"mensagem": "Imóvel atualizado com sucesso!"}
 
     mock_cursor.execute.assert_called_once_with(
         "UPDATE imoveis SET logradouro = ?, tipo_logradouro = ?, bairro = ?, cidade = ?, cep = ?, tipo = ?, valor = ?, data_aquisicao = ? WHERE id = ?",
@@ -169,7 +169,7 @@ def test_atualizar_imovel_ok(mock_conectar_banco, client):
     mock_cursor.close.assert_called_once()
     mock_conn.close.assert_called_once()
 
-@patch("api.conectar_banco")
+@patch("servidor.conectar_banco")
 def test_atualizar_imovel_not_found(mock_conectar_banco, client):
     """PUT /imoveis/<id> - imóvel não encontrado."""
     mock_conn = MagicMock()
@@ -192,7 +192,7 @@ def test_atualizar_imovel_not_found(mock_conectar_banco, client):
     response = client.put("/imoveis/1", json=payload)
 
     assert response.status_code == 404
-    assert response.get_json() == {"erro": "Imóvel não encontrado"}
+    assert response.get_json() == {"error": "Imóvel não encontrado"}
 
     mock_cursor.execute.assert_called_once_with(
         "UPDATE imoveis SET logradouro = ?, tipo_logradouro = ?, bairro = ?, cidade = ?, cep = ?, tipo = ?, valor = ?, data_aquisicao = ? WHERE id = ?",
