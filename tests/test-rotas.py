@@ -252,7 +252,7 @@ def test_deletar_imovel_not_found(mock_conectar_banco, client):
     mock_conn.close.assert_called_once()
 
 @patch("servidor.conectar_banco")
-def test_listar_imoveis_com_dados(mock_conectar_banco, client):
+def test_listar_imoveis_filtrados(mock_conectar_banco, client):
     """GET /imoveis/<str:tipo> - retorna lista com itens."""
     imovel = {
         "id": 1, "logradouro": "Rua A", "tipo_logradouro": "Rua",
