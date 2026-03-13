@@ -126,7 +126,7 @@ def test_criar_imovel(mock_conectar_banco, client):
     assert response.get_json() == {"message": "Imóvel adicionado com sucesso"}
 
 
-@patch("api.conectar_banco")
+@patch("servidor.conectar_banco")
 def test_criar_imovel_erro_validacao(mock_conectar_banco, client):
     """POST /imoveis/add - falta campo obrigatório -> 400. Não deve acessar o banco."""
     response = client.post("/imoveis/add", json={"logradouro": "saulo"})
@@ -136,7 +136,7 @@ def test_criar_imovel_erro_validacao(mock_conectar_banco, client):
 
     mock_conectar_banco.assert_not_called()
 
-@patch("api.conectar_banco")
+@patch("servidor.conectar_banco")
 def test_atualizar_imovel_ok(mock_conectar_banco, client):
     """PUT /imoveis/<id> - atualiza com sucesso."""
     mock_conn = MagicMock()
@@ -169,7 +169,7 @@ def test_atualizar_imovel_ok(mock_conectar_banco, client):
     mock_cursor.close.assert_called_once()
     mock_conn.close.assert_called_once()
 
-@patch("api.conectar_banco")
+@patch("servidor.conectar_banco")
 def test_atualizar_imovel_not_found(mock_conectar_banco, client):
     """PUT /imoveis/<id> - imóvel não encontrado."""
     mock_conn = MagicMock()
