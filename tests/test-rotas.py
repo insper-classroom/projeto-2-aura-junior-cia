@@ -50,12 +50,16 @@ def test_listar_imoveis_com_dados(mock_conectar_banco, client):
 
     response = client.get("/imoveis")
 
+    mock_conn.commit.assert_called_once()
+    mock_cursor.close.assert_called_once()
+    mock_conn.close.assert_called_once()
+
     assert response.status_code == 200
     assert response.get_json() == [imovel]
 
 @patch("servidor.conectar_banco")
 def test_pegar_um_imovel(mock_conectar_banco, client):
-    """GET /imoveis - retorna lista com itens."""
+    """GET /imoveis/<id> - retorna um imóvel com base no id."""
     imovel = {
         "id": 1, "logradouro": "Rua A", "tipo_logradouro": "Rua",
         "bairro": "Centro", "cidade": "SP", "cep": "01001-000",
@@ -69,12 +73,16 @@ def test_pegar_um_imovel(mock_conectar_banco, client):
 
     response = client.get("/imoveis/1")
 
+    mock_conn.commit.assert_called_once()
+    mock_cursor.close.assert_called_once()
+    mock_conn.close.assert_called_once()
+
     assert response.status_code == 200
     assert response.get_json() == imovel
 
 @patch("servidor.conectar_banco")
 def test_pegar_um_imovel_nao_encontrado(mock_conectar_banco, client):
-    """GET /imoveis - retorna lista com itens."""
+    """GET /imoveis/<id> - nao retorna um imóvel com base no id."""
     mock_conn   = MagicMock()
     mock_cursor = MagicMock()
     mock_conn.cursor.return_value     = mock_cursor
@@ -83,7 +91,42 @@ def test_pegar_um_imovel_nao_encontrado(mock_conectar_banco, client):
 
     response = client.get("/imoveis/1")
 
+    mock_conn.commit.assert_called_once()
+    mock_cursor.close.assert_called_once()
+    mock_conn.close.assert_called_once()
+
     assert response.status_code == 404
     assert response.get_json() == {"error": "Imóvel não encontrado"}
+
+@patch("servidor.conectar_banco")
+def test_adicionar_imovel(mock_conectar_banco, client):
+    """POST /imoveis/add - adiciona um imóvel com base no id."""
+    mock_conn   = MagicMock()
+    mock_cursor = MagicMock()
+    mock_conn.cursor.return_value     = mock_cursor
+    mock_cursor.fetchone.return_value = None
+    mock_conectar_banco.return_value  = mock_conn
+
+    response = client.post("/imoveis/add", json={
+        "logradouro": "Rua A",
+        "tipo_logradouro": "Rua",
+        "bairro": "Centro",
+        "cidade": "SP",
+        "cep": "01001-000",
+        "tipo": "apartamento",
+        "valor": 300000.0,
+        "data_aquisicao": "2023-01-01"
+    })
+    mock_cursor.execute.assert_called_once_with(
+        "INSERT INTO imoveis (logradouro, tipo_logradouro, bairro, cidade, cep, tipo, valor, data_aquisicao) VALUES (?, ?, ?, ?, ?, ?, ?, ?,)",
+        ("Rua A", "Rua", "Centro", "SP", "01001-000", "apartamento",300000.0, "2023-01-01"),
+    )
+    mock_conn.commit.assert_called_once()
+    mock_cursor.close.assert_called_once()
+    mock_conn.close.assert_called_once()
+
+    assert response.status_code == 201
+    assert response.get_json() == {"message": "Imóvel adicionado com sucesso"}
+
 
 
