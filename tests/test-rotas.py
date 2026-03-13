@@ -72,3 +72,18 @@ def test_pegar_um_imovel(mock_conectar_banco, client):
     assert response.status_code == 200
     assert response.get_json() == imovel
 
+@patch("servidor.conectar_banco")
+def test_pegar_um_imovel_nao_encontrado(mock_conectar_banco, client):
+    """GET /imoveis - retorna lista com itens."""
+    mock_conn   = MagicMock()
+    mock_cursor = MagicMock()
+    mock_conn.cursor.return_value     = mock_cursor
+    mock_cursor.fetchone.return_value = None
+    mock_conectar_banco.return_value  = mock_conn
+
+    response = client.get("/imoveis/1")
+
+    assert response.status_code == 404
+    assert response.get_json() == {"error": "Imóvel não encontrado"}
+
+
