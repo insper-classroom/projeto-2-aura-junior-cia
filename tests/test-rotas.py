@@ -123,7 +123,7 @@ def test_criar_imovel(mock_conectar_banco, client):
     mock_conn.close.assert_called_once()
 
     assert response.status_code == 201
-    assert response.get_json() == {"message": "Imóvel adicionado com sucesso"}
+    assert response.get_json() == {"message": "Imóvel adicionado com sucesso!"}
 
 
 @patch("servidor.conectar_banco")
@@ -132,7 +132,7 @@ def test_criar_imovel_erro_validacao(mock_conectar_banco, client):
     response = client.post("/imoveis/add", json={"logradouro": "saulo"})
 
     assert response.status_code == 400
-    assert response.get_json() == {"erro": "Campos obrigatórios: logradouro, tipo_logradouro, bairro, cidade, cep, tipo, valor, data_aquisicao"}
+    assert response.get_json() == {"error": "Dados incompletos"}
 
     mock_conectar_banco.assert_not_called()
 
@@ -159,7 +159,7 @@ def test_atualizar_imovel_ok(mock_conectar_banco, client):
     response = client.put("/imoveis/1", json=payload)
 
     assert response.status_code == 200
-    assert response.get_json() == {"mensagem": "Imóvel atualizado com sucesso"}
+    assert response.get_json() == {"mensagem": "Imóvel atualizado com sucesso!"}
 
     mock_cursor.execute.assert_called_once_with(
         "UPDATE imoveis SET logradouro = ?, tipo_logradouro = ?, bairro = ?, cidade = ?, cep = ?, tipo = ?, valor = ?, data_aquisicao = ? WHERE id = ?",
