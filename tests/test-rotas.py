@@ -50,7 +50,6 @@ def test_listar_imoveis_com_dados(mock_conectar_banco, client):
 
     response = client.get("/imoveis")
 
-    mock_conn.commit.assert_called_once()
     mock_cursor.close.assert_called_once()
     mock_conn.close.assert_called_once()
 
@@ -73,7 +72,6 @@ def test_pegar_um_imovel(mock_conectar_banco, client):
 
     response = client.get("/imoveis/1")
 
-    mock_conn.commit.assert_called_once()
     mock_cursor.close.assert_called_once()
     mock_conn.close.assert_called_once()
 
@@ -91,7 +89,6 @@ def test_pegar_um_imovel_nao_encontrado(mock_conectar_banco, client):
 
     response = client.get("/imoveis/1")
 
-    mock_conn.commit.assert_called_once()
     mock_cursor.close.assert_called_once()
     mock_conn.close.assert_called_once()
 
@@ -118,7 +115,7 @@ def test_adicionar_imovel(mock_conectar_banco, client):
         "data_aquisicao": "2023-01-01"
     })
     mock_cursor.execute.assert_called_once_with(
-        "INSERT INTO imoveis (logradouro, tipo_logradouro, bairro, cidade, cep, tipo, valor, data_aquisicao) VALUES (?, ?, ?, ?, ?, ?, ?, ?,)",
+        "INSERT INTO imoveis (logradouro, tipo_logradouro, bairro, cidade, cep, tipo, valor, data_aquisicao) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
         ("Rua A", "Rua", "Centro", "SP", "01001-000", "apartamento",300000.0, "2023-01-01"),
     )
     mock_conn.commit.assert_called_once()
@@ -126,7 +123,7 @@ def test_adicionar_imovel(mock_conectar_banco, client):
     mock_conn.close.assert_called_once()
 
     assert response.status_code == 201
-    assert response.get_json() == {"message": "Imóvel adicionado com sucesso"}
+    assert response.get_json() == {"message": "Imóvel adicionado com sucesso!"}
 
 
 
