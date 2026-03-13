@@ -112,6 +112,28 @@ def adicionar_imovel():
     cursor.close()
     conn.close()
     return jsonify({"message": "Imóvel adicionado com sucesso!"}), 201
-    
+
+@app.route("/imoveis/search", methods=["GET"])
+def pesquisar_imoveis():
+    tipo = request.args.get("tipo", "").strip()
+
+    if not tipo:
+        return jsonify({"error": "Parâmetro 'tipo' é obrigatório"}), 400
+
+    conn   = conectar_banco()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(
+        "SELECT id, logradouro, tipo_logradouro, bairro, cidade, "
+        "cep, tipo, valor, data_aquisicao FROM imoveis WHERE tipo = %s",
+        (tipo,)
+    )
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    if not rows:
+        return jsonify({"message": "Nenhum imóvel encontrado"}), 404
+    return jsonify(rows), 200
+
 if __name__ == "__main__":
     app.run(debug=True)

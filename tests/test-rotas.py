@@ -227,7 +227,6 @@ def test_deletar_imovel_ok(mock_conectar_banco, client):
     mock_conn.close.assert_called_once()
 
 
-
 @patch("servidor.conectar_banco") 
 def test_deletar_imovel_not_found(mock_conectar_banco, client):
     """DELETE /imoveis/<id> - imóvel não encontrado."""
@@ -253,7 +252,7 @@ def test_deletar_imovel_not_found(mock_conectar_banco, client):
 
 @patch("servidor.conectar_banco")
 def test_listar_imoveis_filtrados(mock_conectar_banco, client):
-    """GET /imoveis/<str:tipo> - retorna lista com itens."""
+    """GET /imoveis/search?tipo= - retorna lista com itens filtrados por tipo."""
     imovel = {
         "id": 1, "logradouro": "Rua A", "tipo_logradouro": "Rua",
         "bairro": "Centro", "cidade": "SP", "cep": "01001-000",
@@ -264,13 +263,14 @@ def test_listar_imoveis_filtrados(mock_conectar_banco, client):
     mock_conn.cursor.return_value     = mock_cursor
     mock_cursor.fetchall.return_value = [imovel]
     mock_conectar_banco.return_value  = mock_conn
-    response = client.get("/imoveis")
-    
-    mock_cursor.execute.assert_called_once_with(
-        "SELECT id, logradouro, tipo_logradouro, bairro, cidade, cep, tipo, valor, data_aquisicao FROM imoveis WHERE tipo = ?",
-        ('apartamento',),
-    )
 
+    response = client.get("/imoveis/search?tipo=apartamento")
+
+    mock_cursor.execute.assert_called_once_with(
+        "SELECT id, logradouro, tipo_logradouro, bairro, cidade, "
+        "cep, tipo, valor, data_aquisicao FROM imoveis WHERE tipo = %s",
+        ("apartamento",),
+    )
     mock_cursor.close.assert_called_once()
     mock_conn.close.assert_called_once()
 
