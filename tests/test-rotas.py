@@ -52,3 +52,23 @@ def test_listar_imoveis_com_dados(mock_conectar_banco, client):
 
     assert response.status_code == 200
     assert response.get_json() == [imovel]
+
+@patch("servidor.conectar_banco")
+def test_pegar_um_imovel(mock_conectar_banco, client):
+    """GET /imoveis - retorna lista com itens."""
+    imovel = {
+        "id": 1, "logradouro": "Rua A", "tipo_logradouro": "Rua",
+        "bairro": "Centro", "cidade": "SP", "cep": "01001-000",
+        "tipo": "apartamento", "valor": 300000.0, "data_aquisicao": "2023-01-01",
+    }
+    mock_conn   = MagicMock()
+    mock_cursor = MagicMock()
+    mock_conn.cursor.return_value     = mock_cursor
+    mock_cursor.fetchone.return_value = imovel
+    mock_conectar_banco.return_value  = mock_conn
+
+    response = client.get("/imoveis/1")
+
+    assert response.status_code == 200
+    assert response.get_json() == imovel
+
