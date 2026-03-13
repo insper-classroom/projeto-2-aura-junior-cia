@@ -6,7 +6,6 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# Configurações do Aiven MySQL
 DB_CONFIG = {
     "host":     os.getenv("DB_HOST"),
     "port":     int(os.getenv("DB_PORT")),
@@ -26,7 +25,7 @@ def conectar_banco():
 @app.route("/imoveis", methods=["GET"])
 def listar_imoveis():
     conn   = conectar_banco()
-    cursor = conn.cursor(dictionary=True)   # retorna dicts em vez de tuplas
+    cursor = conn.cursor(dictionary=True)  
     cursor.execute(
         "SELECT id, logradouro, tipo_logradouro, bairro, cidade, "
         "cep, tipo, valor, data_aquisicao FROM imoveis"
