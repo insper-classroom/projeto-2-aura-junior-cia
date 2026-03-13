@@ -33,26 +33,57 @@ def listar_imoveis():
     conn.close()
     return jsonify(rows)
 
-@app.route("/imoveis/<int:id>", methods=["GET"])
+@app.route("/imoveis/<int:id>", methods=["GET", "PUT"])
 def listar_por_id(id):
-    conn   = conectar_banco()
-    cursor = conn.cursor()  
-    cursor.execute(
-        "SELECT id, logradouro, tipo_logradouro, bairro, cidade, "
-        "cep, tipo, valor, data_aquisicao FROM imoveis WHERE id = %s",
-        (id,)
-    )
-    row = cursor.fetchone()
-    cursor.close()
-    conn.close()
-    if row:
-        return jsonify(row)
-    else:
-        return jsonify({"error": "Imóvel não encontrado"}), 404
+    if request.method == "GET":
+        conn   = conectar_banco()
+        cursor = conn.cursor(dictionary=True)  
+        cursor.execute(
+            "SELECT id, logradouro, tipo_logradouro, bairro, cidade, "
+            "cep, tipo, valor, data_aquisicao FROM imoveis WHERE id = %s",
+            (id,)
+        )
+        row = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        if row:
+            return jsonify(row)
+        else:
+            return jsonify({"error": "Imóvel não encontrado"}), 404
     
+    if request.method == "PUT":
+        data = request.get_json()
+        conn   = conectar_banco()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute(
+            "UPDATE imoveis SET logradouro = ?, tipo_logradouro = ?, "
+            "bairro = ?, cidade = ?, cep = ?, tipo = ?, valor = ?, "
+            "data_aquisicao = ? WHERE id = ?",
+            (
+                data["logradouro"], data["tipo_logradouro"], data["bairro"],
+                data["cidade"], data["cep"], data["tipo"],
+                data["valor"], data["data_aquisicao"], id
+            )
+        )
+        conn.commit()
+        rows_affected = cursor.rowcount
+        cursor.close()
+        conn.close()
+
+        if rows_affected == 0:
+            return jsonify({"error": "Imóvel não encontrado"}), 404
+
+        return jsonify({"mensagem": "Imóvel atualizado com sucesso!"}), 200
+
+
 @app.route("/imoveis/add", methods=["POST"])
 def adicionar_imovel():
     data = request.get_json()
+
+    if not all(key in data for key in ["logradouro", "tipo_logradouro", "bairro", "cidade", "cep", "tipo", "valor", "data_aquisicao"]):
+        return jsonify({"error": "Dados incompletos"}), 400
+
     conn   = conectar_banco()
     cursor = conn.cursor()  
     cursor.execute(
@@ -67,30 +98,7 @@ def adicionar_imovel():
     conn.commit()
     cursor.close()
     conn.close()
-    return jsonify({"message": "Imóvel adicionado com sucesso!"}), 201
+    return jsonify({"mensagem": "Imóvel adicionado com sucesso!"}), 201
     
 if __name__ == "__main__":
     app.run(debug=True)
-
-@app.route("/imoveis/update/<int:id>", methods=["PUT"])
-def atualizar_imovel(idl):
-    data = request.get_json()
-    conn = conectar_banco()
-    cursor = conn.cursor()
-    cursor.execute(
-        "UPDATE imoveis SET logradouro = %s, tipo_logradouro = %s, bairro = %s, "
-        "cidade = %s, cep = %s, tipo = %s, valor = %s, data_aquisicao = %s "
-        "WHERE id = %s",
-        (
-            data["logradouro"], data["tipo_logradouro"], data["bairro"],
-            data["cidade"], data["cep"], data["tipo"],
-            data["valor"], data["data_aquisicao"], id
-        )
-    )
-    conn.commit()
-    cursor.close()  
-    conn.close()
-    return jsonify({"message": "Imóvel atualizado com sucesso!"})
-
-    
-    
