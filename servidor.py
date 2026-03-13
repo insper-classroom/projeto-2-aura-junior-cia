@@ -33,7 +33,7 @@ def listar_imoveis():
     conn.close()
     return jsonify(rows)
 
-@app.route("/imoveis/<int:id>", methods=["GET", "PUT"])
+@app.route("/imoveis/<int:id>", methods=["GET", "PUT", "DELETE"])
 def listar_por_id(id):
     if request.method == "GET":
         conn   = conectar_banco()
@@ -76,6 +76,19 @@ def listar_por_id(id):
 
         return jsonify({"mensagem": "Imóvel atualizado com sucesso!"}), 200
 
+    if request.method == "DELETE":
+        conn   = conectar_banco()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM imoveis WHERE id = ?", (id,))
+        conn.commit()
+        rows_affected = cursor.rowcount
+        cursor.close()
+        conn.close()
+
+        if rows_affected == 0:
+            return jsonify({"error": "Imóvel não encontrado"}), 404
+
+        return jsonify({"mensagem": "Imóvel deletado com sucesso!"}), 200
 
 @app.route("/imoveis/add", methods=["POST"])
 def adicionar_imovel():
@@ -98,7 +111,7 @@ def adicionar_imovel():
     conn.commit()
     cursor.close()
     conn.close()
-    return jsonify({"mensagem": "Imóvel adicionado com sucesso!"}), 201
+    return jsonify({"message": "Imóvel adicionado com sucesso!"}), 201
     
 if __name__ == "__main__":
     app.run(debug=True)
