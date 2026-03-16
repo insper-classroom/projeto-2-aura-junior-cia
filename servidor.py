@@ -57,9 +57,9 @@ def listar_por_id(id):
         cursor = conn.cursor(dictionary=True)
 
         cursor.execute(
-            "UPDATE imoveis SET logradouro = ?, tipo_logradouro = ?, "
-            "bairro = ?, cidade = ?, cep = ?, tipo = ?, valor = ?, "
-            "data_aquisicao = ? WHERE id = ?",
+            "UPDATE imoveis SET logradouro = %s, tipo_logradouro = %s, "
+            "bairro = %s, cidade = %s, cep = %s, tipo = %s, valor = %s, "
+            "data_aquisicao = %s WHERE id = %s",
             (
                 data["logradouro"], data["tipo_logradouro"], data["bairro"],
                 data["cidade"], data["cep"], data["tipo"],
@@ -79,7 +79,7 @@ def listar_por_id(id):
     if request.method == "DELETE":
         conn   = conectar_banco()
         cursor = conn.cursor()
-        cursor.execute("DELETE FROM imoveis WHERE id = ?", (id,))
+        cursor.execute("DELETE FROM imoveis WHERE id = %s", (id,))
         conn.commit()
         rows_affected = cursor.rowcount
         cursor.close()
@@ -115,22 +115,33 @@ def adicionar_imovel():
 
 @app.route("/imoveis/search", methods=["GET"])
 def pesquisar_imoveis():
-    tipo = request.args.get("tipo", "").strip()
 
+    filtros_permitidos = ["bairro", "cidade", "tipo", "cep"]
+
+    for filtro in filtros_permitidos:
+        tipo = request.args.get(filtro, "").strip()
+
+        if filtro not in filtros_permitidos:
+            raise ValueError("Filtro inválido")
+
+        if tipo:
+            break
+        
     if not tipo:
-        return jsonify({"error": "Parâmetro 'tipo' é obrigatório"}), 400
+        return jsonify({"error": "Parâmetro 'tipo/cidade' é obrigatório"}), 400
 
     conn   = conectar_banco()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor()
     cursor.execute(
         "SELECT id, logradouro, tipo_logradouro, bairro, cidade, "
-        "cep, tipo, valor, data_aquisicao FROM imoveis WHERE tipo = %s",
+        f"cep, tipo, valor, data_aquisicao FROM imoveis WHERE {filtro} = %s",
         (tipo,)
     )
     rows = cursor.fetchall()
+
     cursor.close()
     conn.close()
-
+    
     if not rows:
         return jsonify({"message": "Nenhum imóvel encontrado"}), 404
     return jsonify(rows), 200
