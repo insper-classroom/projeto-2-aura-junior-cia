@@ -20,6 +20,15 @@ def conectar_banco():
     """Retorna uma conexão com o MySQL do Aiven."""
     return mysql.connector.connect(**DB_CONFIG)
 
+
+def _links_for_id(id):
+    return {
+        "self": f"/imoveis/{id}",
+        "update": f"/imoveis/{id}",
+        "delete": f"/imoveis/{id}",
+    }
+
+
 @app.route("/imoveis", methods=["GET"])
 def listar_imoveis():
     conn   = conectar_banco()
@@ -31,6 +40,10 @@ def listar_imoveis():
     rows = cursor.fetchall()
     cursor.close()
     conn.close()
+
+    for row in rows:
+        row["links"] = _links_for_id(row["id"])
+
     return jsonify(rows)
 
 @app.route("/imoveis/<int:id>", methods=["GET", "PUT", "DELETE"])
@@ -47,6 +60,7 @@ def listar_por_id(id):
         cursor.close()
         conn.close()
         if row:
+            row["links"] = _links_for_id(row["id"])
             return jsonify(row)
         else:
             return jsonify({"error": "Imóvel não encontrado"}), 404
@@ -74,7 +88,20 @@ def listar_por_id(id):
         if rows_affected == 0:
             return jsonify({"error": "Imóvel não encontrado"}), 404
 
-        return jsonify({"mensagem": "Imóvel atualizado com sucesso!"}), 200
+        # Fetch the updated imovel
+        conn = conectar_banco()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(
+            "SELECT id, logradouro, tipo_logradouro, bairro, cidade, "
+            "cep, tipo, valor, data_aquisicao FROM imoveis WHERE id = %s",
+            (id,)
+        )
+        row = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        row["links"] = _links_for_id(row["id"])
+        return jsonify(row), 200
 
     if request.method == "DELETE":
         conn   = conectar_banco()
@@ -88,7 +115,10 @@ def listar_por_id(id):
         if rows_affected == 0:
             return jsonify({"error": "Imóvel não encontrado"}), 404
 
-        return jsonify({"mensagem": "Imóvel deletado com sucesso!"}), 200
+        return jsonify({
+            "mensagem": "Imóvel deletado com sucesso!",
+            "links": {"list": "/imoveis"},
+        }), 200
 
 @app.route("/imoveis/add", methods=["POST"])
 def adicionar_imovel():
@@ -109,9 +139,24 @@ def adicionar_imovel():
         )
     )
     conn.commit()
+    inserted_id = cursor.lastrowid
     cursor.close()
     conn.close()
-    return jsonify({"message": "Imóvel adicionado com sucesso!"}), 201
+
+    # Fetch the created imovel
+    conn = conectar_banco()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(
+        "SELECT id, logradouro, tipo_logradouro, bairro, cidade, "
+        "cep, tipo, valor, data_aquisicao FROM imoveis WHERE id = %s",
+        (inserted_id,)
+    )
+    row = cursor.fetchone()
+    cursor.close()
+    conn.close()
+
+    row["links"] = _links_for_id(row["id"])
+    return jsonify(row), 201
 
 @app.route("/imoveis/search", methods=["GET"])
 def pesquisar_imoveis():
@@ -144,6 +189,10 @@ def pesquisar_imoveis():
     
     if not rows:
         return jsonify({"message": "Nenhum imóvel encontrado"}), 404
+
+    for row in rows:
+        row["links"] = _links_for_id(row["id"])
+
     return jsonify(rows), 200
 
 if __name__ == "__main__":
