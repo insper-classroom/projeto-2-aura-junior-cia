@@ -266,3 +266,43 @@ def test_listar_imoveis_filtrados_por_cidade(mock_conectar_banco, client):
 
     assert response.status_code == 200
     assert response.get_json() == [imovel]
+
+@patch("servidor.conectar_banco")
+def test_listar_imoveis_filtrados_por_tipo_(mock_conectar_banco, client):
+    """GET /imoveis/search?tipo= - retorna lista com itens filtrados por tipo."""
+    
+    mock_conn   = MagicMock()
+    mock_cursor = MagicMock()
+    mock_conn.cursor.return_value     = mock_cursor
+    mock_cursor.fetchall.return_value = []
+    mock_conectar_banco.return_value  = mock_conn
+
+    response = client.get("/imoveis/search?tipo=apartamento")
+
+
+    assert response.status_code == 404
+    assert response.get_json() == {"message": "Nenhum imóvel encontrado"}
+
+@patch("servidor.conectar_banco")
+def test_listar_imoveis_filtrados_por_cidade_not_found(mock_conectar_banco, client):
+    """GET /imoveis/search?cidade= - retorna lista com itens filtrados por cidade."""
+    mock_conn   = MagicMock()
+    mock_cursor = MagicMock()
+    mock_conn.cursor.return_value     = mock_cursor
+    mock_conectar_banco.return_value  = mock_conn
+    mock_cursor.fetchall.return_value = []
+    response = client.get("/imoveis/search?cidade=RJ")
+    
+
+    mock_cursor.execute.assert_called_once_with(
+        "SELECT id, logradouro, tipo_logradouro, bairro, cidade, "
+        "cep, tipo, valor, data_aquisicao FROM imoveis WHERE cidade = %s",
+        ("RJ",),
+    )
+
+
+    mock_cursor.close.assert_called_once()
+    mock_conn.close.assert_called_once()
+
+    assert response.status_code == 404
+    assert response.get_json() == {"message": "Nenhum imóvel encontrado"}
